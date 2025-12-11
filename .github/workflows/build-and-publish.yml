@@ -1,11 +1,6 @@
 name: Build and Push Docker Images (Default + Simple Mode)
 
 on:
-  push:
-    branches:
-      - "main"
-    tags:
-      - "v*"
   workflow_dispatch:
 
 jobs:
