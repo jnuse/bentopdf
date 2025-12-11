@@ -1,0 +1,46 @@
+# 这是一个精简的工作流，仅用于手动触发，构建项目并部署到 GitHub Pages。
+name: Manual Deploy to GitHub Pages
+
+on:
+  workflow_dispatch: # 只保留手动触发
+
+# 设置部署所需的权限
+permissions:
+  contents: read
+  pages: write      # 允许 workflow 写入 Pages
+  id-token: write   # 允许 workflow 请求 OIDC Token
+
+jobs:
+  # 一个 job 完成所有事情：构建并部署
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }} # 在日志中输出部署后的 URL
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js 20.x
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: 'npm' # 为 npm 开启缓存，加快依赖安装速度
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build project
+        run: npm run build
+
+      - name: Create 404.html for SPA fallback
+        run: cp dist/index.html dist/404.html
+
+      - name: Upload artifact for GitHub Pages
+        uses: actions/upload-pages-artifact@v3 # 关键步骤：上传构建产物
+        with:
+          path: ./dist # 指定你的构建输出目录 (BentoPDF 的构建目录是 dist)
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4 # 关键步骤：执行部署
